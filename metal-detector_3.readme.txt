@@ -1,0 +1,55 @@
+Detector coil
+The inductor coil is made from approximately 50 wraps of 26 AWG wire around a spool of 5.5 inches in diameter.
+
+
+I used an Arduino UNO to program a DIP ATMega328. I then removed the ATMega328 from the development board and embedded into a perfboard along with the rest of the circuit.
+
+The Colpitts oscillator, on the bottom left on the diagram, feeds the oscillation into counter 1 (pin T1) of the chip (marked as digital pin 5 on the Arduino UNO), where it constantly counts the frequency of oscillation.
+
+On the top level of the diagram, a power supply of 4.5V (3xAA batteries, with bypass capacitors) is used to power the ATmega328, oscillator, speaker, and motor (with LEDs).
+
+To keep the current draw of the microcontroller’s digital pins at a safe level (40 mA per pin maximum for the ATmega328), an NPN transistor (C2878) is used to drive the speaker, and an N-channel MOSFET (SUB45N03) to drive the motor.
+
+Both the trigger and reset (sets fixed frequency) switches are wired to digital pins using internal pull-up configuration. Small capacitors are added in parallel to debounce the switches.
+
+The sensitivity potentiometer is set up as a voltage divider, and the division is read using an analog pin.
+
+ 
+
+Code Walkthrough
+The full source code for this project can be found here:
+
+https://github.com/evankale/ArduinoMetalDetector
+
+Below is a detailed walkthrough of the code.
+
+Setup Function
+To keep track of the detector oscillation frequency through timer counter 1, we first need to configure the timer/counter controller registers (TCCR). These TCCRs are accessed through the three integers: TTCR1A, TTCR1B, and TTCR1C.
+TCCR1A = 0b00000000;
+TCCR1B = 0b00000111;
+We will need to set the waveform generation to normal mode by setting the WGM flags of TCCR1A and TCCR1B to 0, and set the clock speed selection mode to external clock source by setting CS flags of TCCR1B to mode 3 (external clock on rising edge). In this configuration, the register OCR1A will decrement by 1 every time a rising edge is detected from the oscillation.
+TIMSK1 |= (1 << OCIE1A);
+Next we'll need to enable timer/count interrupt A by setting the OCIE1A flag in TIMSK1 register. This will enable the SIGNAL(TIMER1_COMPA_vect) interrupt function to be called whenever OCR1A register reaches 0.
+OCR1A = 1;
+Now initialize OCR1A to 1 so that the interrupt function is called as soon as the first rising edge is detected.
+
+Interrupt Function
+This is the SIGNAL(TIMER1_COMPA_vect) function. It's called when the OCR1A register reaches 0. In this function, we want to keep track of the number of microseconds elapsed since the last time the function was called. This time delta is stored as signalTimeDelta.
+storedTimeDelta is the “fixed frequency” time delta that signalTimeDelta is compared to in the main loop. storedTimeDelta is set to signalTimeDelta when storedTimeDelta is zeroed (on bootup and when the reset switch is pressed).
+OCR1A += CYCLES_PER_SIGNAL;
+After performing interrupt operations, OCR1A needs to be reset by incrementing it with our predefined constant, CYCLES_PER_SIGNAL (number of cycles before next interrupt occurs).
+
+Loop Function
+In the loop function, we check if the trigger is pressed. If so, then read the analog value of the sensitivity potentiometer and linearly interpolate the analog value (0 to 1023) to an easier to use scale (0.5 to 10.0).
+int storedTimeDeltaDifference = (storedTimeDelta - signalTimeDelta) * sensitivity;
+The difference between the fixed frequency (storedTimeDelta) and measured frequency (signalTimeDelta) is calculated and multiplied by the sensitivity value.
+tone(SPEAKER_PIN, BASE_TONE_FREQUENCY + storedTimeDeltaDifference);
+This value is then summed with an audible base tone frequency, BASE_TONE_FREQUENCY, and played out the speaker using the Arduino tone() function.
+If the difference exceeds the threshold defined by SPINNER_THRESHOLD, then the motor is activated.
+If the trigger is released, then the speaker tone is stopped (by calling noTone() function) and the motor is deactivated.
+If the reset button has been pressed, it will zero storedTimeDelta, allowing the next interrupt call to set a new value.
+ 
+How Functional is Our Arduino-Based Metal Detector?
+With the lowest sensitivity setting, the metal detector can pick up large items like soda cans, cell phones, and iron tools within a few inches away from the coil. On the highest sensitivity setting, smaller items like steel rings, screws, and coins within the same proximity can also be detected. See the video at the top of the article for a demonstration!
+To extend the range of the detector, we can increase the magnetic field area created by the inductor. This can be achieved by increasing the current flow through the inductor (by increasing voltage input to the oscillator, allowing a greater gain in the amplifier), or by increasing the number of wire wraps in the inductor coil.
+With an Arduino-based metal detector, we can do other interesting things that cannot be done with traditional BFO metal detectors. Stay tuned for future projects on how we can take advantage of this metal detecting mechanism for other purposes!
