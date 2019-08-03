@@ -6,14 +6,18 @@
 #define UNO   // comment out for other version, different pins
 #ifdef UNO
 #define ALERT_PIN 9
+#define SENSEPIN 2
+#define SERVOLINE 3
 #else
 #define ALERT_PIN 1 // digital out pin for threshold alert (D1, chip pin 6) 
 #endif
 #define SerialRate 9600
 
-#include <Servo.h>  // servo lib
-Servo myservo;  // create servo object to control a servo
+#include <ServoTimer2.h>  // servo lib
+ServoTimer2 myservo;  // create servo object to control a servo
 int pos;        // desired position of servo
+
+int DoorState, lastDoorState;  // state of Hall effect sensor on door
 
 // Number of cycles from external counter needed to generate a signal event
 #define CYCLES_PER_SIGNAL 5000
@@ -57,7 +61,7 @@ void setup()
    pinMode(SENSEPIN, INPUT); 
    DoorState = HIGH;
    lastDoorState = DoorState;    // init door state change = same = NO
-   Serial.begin(SensorRate);	// Setup serial interface for test data outputs
+   Serial.begin(SerialRate);	// Setup serial interface for test data outputs
    pos=0;
    doorlatch(pos);              // home servo
  
@@ -130,4 +134,3 @@ void doorlatch(int pos) {
     delay(100);                       // waits 100ms for the servo to reach the position
     myservo.detach();                 // detach pwm line
   }
-
