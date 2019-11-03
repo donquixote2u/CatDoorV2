@@ -12,13 +12,12 @@
 #define ALERT_PIN 1 // digital out pin for threshold alert (D1, chip pin 6) 
 #endif
 #define SerialRate 9600
-
-#include <ServoTimer2.h>  // servo lib
+#include <ServoTimer2.h>
 ServoTimer2 myservo;  // create servo object to control a servo
 int pos;        // desired position of servo
 
 int DoorState, lastDoorState;  // state of Hall effect sensor on door
-
+int lastTriggerValue=0;       // stored trigger value to detect change
 // Number of cycles from external counter needed to generate a signal event
 #define CYCLES_PER_SIGNAL 5000
 
@@ -62,7 +61,7 @@ void setup()
    DoorState = HIGH;
    lastDoorState = DoorState;    // init door state change = same = NO
    Serial.begin(SerialRate);	// Setup serial interface for test data outputs
-   pos=0;
+   pos=10;
    doorlatch(pos);              // home servo
  
  // INITIALISE METAL DETECTOR TIMER 
@@ -89,11 +88,15 @@ void loop()
 
     float sensitivity = mapFloat(analogRead(SENSITIVITY_POT_APIN), 0, 1023, 0.5, 10.0);
     int storedTimeDeltaDifference = (storedTimeDelta - signalTimeDelta) * sensitivity;
-    Serial.print("val=");
-    Serial.println(storedTimeDeltaDifference);
+    if(storedTimeDeltaDifference!=lastTriggerValue) 
+      { Serial.print("val=");
+        Serial.println(storedTimeDeltaDifference);
+      }  
     if (storedTimeDeltaDifference > ALERT_THRESHOLD)
     {
       digitalWrite(ALERT_PIN, LOW);
+      Serial.print("alert triggered; val=");
+      Serial.println(storedTimeDeltaDifference);
     }
     else
     {
@@ -107,16 +110,16 @@ void loop()
   delay(500);
    DoorState = digitalRead(SENSEPIN);
    if (DoorState != lastDoorState) {
-    Serial.print("\nDoor state change:"); 
+     Serial.print("\nDoor state change:"); 
    // if the state has changed and change is to LOW door is closed
    if (DoorState == LOW) {
-        pos=200; doorlatch(pos);             //if door clowsed, ensure latch also closed
         Serial.print("Door closed"); 
+        pos=2100; doorlatch(pos);             //if door clowsed, ensure latch also closed
         }
      else { 
-     pos=0; doorlatch(pos);             //if door open, ensure latch also open
-     Serial.print("Door open"); 
-	}
+        Serial.print("Door open"); 
+        pos=1100; doorlatch(pos);             //if door open, ensure latch also open
+      	}
      lastDoorState=DoorState;        // store latest door state   
     }        
  
@@ -129,8 +132,9 @@ float mapFloat(int input, int inMin, int inMax, float outMin, float outMax)
 }
 
 void doorlatch(int pos) {
-    myservo.attach(SERVOLINE);  // attaches the servo to pwm line
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(100);                       // waits 100ms for the servo to reach the position
-    myservo.detach();                 // detach pwm line
+  myservo.attach(SERVOLINE);  // attaches the servo to pwm line
+  int val=pos;
+  myservo.write(val);              // tell servo to go to position in variable 'pos'
+  delay(100);
+  myservo.detach();                 // detach pwm line
   }
