@@ -11,29 +11,27 @@
 #else
 #define ALERT_PIN 1 // digital out pin for threshold alert (D1, chip pin 6) 
 #endif
-#define SerialRate 9600
+#define SerialRate 115200
+// Number of cycles from external counter needed to generate a signal event
+#define CYCLES_PER_SIGNAL 5000
+// Frequency delta threshold for ALERT to trigger
+#define ALERT_THRESHOLD 49
+// Common Pin definitions
+#define SENSITIVITY_POT_APIN A0
+#define RESET_BTN_PIN 12
+
 #include <ServoTimer2.h>
 ServoTimer2 myservo;  // create servo object to control a servo
 int pos;        // desired position of servo
 
 int DoorState, lastDoorState;  // state of Hall effect sensor on door
 int lastTriggerValue=0;       // stored trigger value to detect change
-// Number of cycles from external counter needed to generate a signal event
-#define CYCLES_PER_SIGNAL 5000
-
-// Frequency delta threshold for ALERT to trigger
-#define ALERT_THRESHOLD 49
-
-// Common Pin definitions
-#define SENSITIVITY_POT_APIN A0
-#define RESET_BTN_PIN 12
+String Command;                // flag for serial command line
 
 unsigned long lastSignalTime = 0;
 unsigned long signalTimeDelta = 0;
-
 boolean firstSignal = true;
 unsigned long storedTimeDelta = 0;
-
 // This signal is called whenever OCR1A reaches 0
 // (Note: OCR1A is decremented on every external clock cycle)
 SIGNAL(TIMER1_COMPA_vect)
@@ -121,8 +119,45 @@ void loop()
         pos=1100; doorlatch(pos);             //if door open, ensure latch also open
       	}
      lastDoorState=DoorState;        // store latest door state   
-    }        
- 
+    } 
+    checkControls();      
+ }
+
+void checkControls() {
+int data;
+bool cmdmode=false;
+ if(Serial.available() > 0)
+   {
+   while(Serial.available() > 0) {
+    data=Serial.read();
+    if(cmdmode) {
+      switch (data) {
+        case 66:
+          Serial.print("status B");
+          pos=1100; doorlatch(pos); 
+          break;
+        case 73:
+          Serial.print("status I");
+          break;
+        case 76:
+          Serial.print("status L");
+          break;
+        case 79:
+          pos=2100; doorlatch(pos);
+          Serial.print("status O");
+          break;
+        }         // end switch
+      }           // end cmdmode
+    else { if(data==35)
+             { 
+              Serial.println("\ncommand mode on");
+              cmdmode=true; 
+             }
+           else
+              { cmdmode=false; }
+         } 
+   }    // end while
+ }    // end if  
 }
 
 float mapFloat(int input, int inMin, int inMax, float outMin, float outMax)
