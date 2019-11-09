@@ -143,7 +143,7 @@ bool cmdmode=false;
           Serial.print("status L");
           break;
         case 79:
-          pos=2100; doorlatch(pos);
+          pos=2150; doorlatch(pos);
           Serial.print("status O");
           break;
         }         // end switch
