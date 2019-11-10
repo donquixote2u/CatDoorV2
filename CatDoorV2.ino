@@ -5,10 +5,9 @@
 */ 
 #define UNO   // comment out for other version, different pins
 #ifdef UNO
-#define ALERT_PIN 9
 #define SENSEPIN 2
 #define SERVOLINE 3
-#else
+#else		//          for e.g. Attiny85
 #define ALERT_PIN 1 // digital out pin for threshold alert (D1, chip pin 6) 
 #endif
 #define SerialRate 115200
@@ -18,16 +17,15 @@
 #define ALERT_THRESHOLD 49
 // Common Pin definitions
 #define SENSITIVITY_POT_APIN A0
-#define RESET_BTN_PIN 12
+// #define RESET_BTN_PIN 12		not implemented yet!
 
 #include <ServoTimer2.h>
 ServoTimer2 myservo;  // create servo object to control a servo
 int pos;        // desired position of servo
 
-int DoorState, lastDoorState;  // state of Hall effect sensor on door
-int lastTriggerValue=0;       // stored trigger value to detect change
-String Command;                // flag for serial command line
-
+int DoorState, lastDoorState;	// state of Hall effect sensor on door
+int lastTriggerValue=0;	   	// stored trigger value to detect change
+int Mode="B";				        // stores door status mode (I,O,B,L)
 unsigned long lastSignalTime = 0;
 unsigned long signalTimeDelta = 0;
 boolean firstSignal = true;
@@ -100,11 +98,11 @@ void loop()
     {
       digitalWrite(ALERT_PIN, HIGH);
     }
-
-  if (digitalRead(RESET_BTN_PIN) == LOW)
-  {
-    storedTimeDelta = 0;
-  }
+// reset not implemented yet
+//  if (digitalRead(RESET_BTN_PIN) == LOW)
+// {
+//  storedTimeDelta = 0;
+// }
   delay(500);
    DoorState = digitalRead(SENSEPIN);
    if (DoorState != lastDoorState) {
@@ -112,7 +110,8 @@ void loop()
    // if the state has changed and change is to LOW door is closed
    if (DoorState == LOW) {
         Serial.print("Door closed"); 
-        pos=2100; doorlatch(pos);             //if door clowsed, ensure latch also closed
+	if(Mode!="B")
+           { pos=2100; doorlatch(pos); }     //if door closed, ensure latch also closed
         }
      else { 
         Serial.print("Door open"); 
@@ -133,22 +132,23 @@ bool cmdmode=false;
     if(cmdmode) {
       switch (data) {
         case 66:
-          Serial.print("status B");
+          Mode="B";
           pos=1100; doorlatch(pos); 
           break;
         case 73:
-          Serial.print("status I");
+          Mode="I";
           break;
         case 76:
-          Serial.print("status L");
+          Mode="L";
           break;
         case 79:
+	  Mode="O";
           pos=2150; doorlatch(pos);
-          Serial.print("status O");
           break;
         }         // end switch
+	Serial.print("status "+Mode);
       }           // end cmdmode
-    else { if(data==35)
+    else { if(data==35)			// "#" precedes a single-char mode command
              { 
               Serial.println("\ncommand mode on");
               cmdmode=true; 
