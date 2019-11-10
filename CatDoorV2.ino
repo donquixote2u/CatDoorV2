@@ -7,27 +7,32 @@
 #ifdef UNO
 #define SENSEPIN 2
 #define SERVOLINE 3
-#else		//          for e.g. Attiny85
-#define ALERT_PIN 1 // digital out pin for threshold alert (D1, chip pin 6) 
 #endif
 #define SerialRate 115200
+#define Ser2Rate 57600
 #include <AltSoftSerial.h>
-Altsoftserial Ser2;         // set up second serial line for HZ1050
+Altsoftserial RFI;         // set up second serial line for HZ1050
 #include <ServoTimer2.h>
 ServoTimer2 myservo;  // create servo object to control a servo
 int pos;        // desired position of servo
 int DoorState, lastDoorState;	// state of Hall effect sensor on door
 int lastTriggerValue=0;	   	// stored trigger value to detect change
 int Mode="B";				        // stores door status mode (I,O,B,L)
-
+bool Debug=true;            // debug (serial output) mode switch
 void setup()
 {
-   pinMode(SENSEPIN, INPUT); 
+   RFI.begin(Ser2Rate);       // set up RFI serial comms
+   pinMode(SENSEPIN, INPUT);  // door state sensor
    DoorState = HIGH;
    lastDoorState = DoorState;    // init door state change = same = NO
    Serial.begin(SerialRate);	// Setup serial interface for test data outputs
    pos=10;
    doorlatch(pos);              // home servo
+}
+
+void DebugOut(String txt) {
+  if(Debug) 
+  Serial.print(txt);
 }
 
 void loop()
@@ -47,7 +52,25 @@ void loop()
       	}
      lastDoorState=DoorState;        // store latest door state   
     } 
-    checkControls();      
+    checkControls();                  // any control commands received?     
+    buffptr=0;
+    while(RFin.available()>0)
+       {
+        rxbuffer[buffptr]=RFin.read();
+       }              // end while serial
+    DebugOut("READ IN:\n");   
+    for(int i=0;i<=buffptr;i++)
+      {     
+       DebugOut(rxbuffer[i],HEX);
+      }
+    DebugOut('\n');  
+    ID=strtol(rxbuffer,NULL,16); 
+    DebugOut(ID,DEC);
+    DebugOut('\n');  
+    if(ID==tag1 || ID==tag2)  // if authoried tag detected, 
+      {
+      Serial.print("tag read:"+ID);
+      }  
  }
 
 void checkControls() {
