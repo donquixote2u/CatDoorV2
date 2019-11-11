@@ -10,7 +10,7 @@
 #endif
 #define SerialRate 115200
 #define Ser2Rate 57600
-#include <AltSoftSerial.h>
+#include <AltSoftSerial.h>  // reserves pins 8(Rx)9(Tx)
 Altsoftserial RFI;         // set up second serial line for HZ1050
 #include <ServoTimer2.h>
 ServoTimer2 myservo;  // create servo object to control a servo
@@ -67,9 +67,9 @@ void loop()
     ID=strtol(rxbuffer,NULL,16); 
     DebugOut(ID,DEC);
     DebugOut('\n');  
-    if(ID==tag1 || ID==tag2)  // if authoried tag detected, 
+    // if(ID==tag1 || ID==tag2)  // if authoried tag detected, 
       {
-      Serial.print("tag read:"+ID);
+      // pos=1100; doorlatch(pos); delay(15000); pos=2150; doorlatch(pos);
       }  
  }
 
