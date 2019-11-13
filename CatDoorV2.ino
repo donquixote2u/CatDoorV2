@@ -43,12 +43,12 @@ void loop()
    if (DoorState != lastDoorState) {
    // if the state has changed and change is to LOW door is closed
    if (DoorState == LOW) {
-        Serial.print("\nDC"); 
+        Serial.println("DC"); 
 	 if(Mode!="B")
            { pos=2100; doorlatch(pos); }     //if door closed, ensure latch also closed
         }
      else { 
-        Serial.print("\nDO"); 
+        Serial.println("DO"); 
         pos=1100; doorlatch(pos);             //if door open, ensure latch also open
       	}
      lastDoorState=DoorState;        // store latest door state   
@@ -69,8 +69,8 @@ void loop()
           ID <<= 8;      // shift left 8 bits, add new byte to ID number
           ID |= rxbuffer[i];
         }
-      Serial.print("\nID");
-      Serial.print(ID,DEC);
+      Serial.print("ID");
+      Serial.println(ID,DEC);
       // if(ID==tag1 || ID==tag2)  // if authoried tag detected, 
       // {
       // pos=1100; doorlatch(pos); delay(15000); pos=2150; doorlatch(pos);
@@ -104,7 +104,7 @@ bool cmdmode=false;
           pos=2150; doorlatch(pos);
           break;
         }         // end switch
-	Serial.print("\n#M"+Mode);
+	Serial.println("#M"+Mode);
       }           // end cmdmode
     else { if(data==35)			// "#" precedes a single-char mode command
              { 
