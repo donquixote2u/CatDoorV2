@@ -23,7 +23,7 @@ int buffptr = 0; // RFin position in circular buffer above
 long ID=0;        // tag ID read
 int DoorState, lastDoorState;	// state of Hall effect sensor on door
 int lastTriggerValue=0;	   	// stored trigger value to detect change
-int Mode="B";				        // stores door status mode (I,O,B,L)
+String Mode="B";				        // stores door status mode (I,O,B,L)
 bool Debug=true;            // debug (serial output) mode switch
 
 void setup()
@@ -49,7 +49,7 @@ void loop()
         }
      else { 
         if(Debug) { Serial.print("DO\n"); } 
-        pos=1100; doorlatch(pos);             //if door open, ensure latch also open
+        pos=1050; doorlatch(pos);             //if door open, ensure latch also open
       	}
      lastDoorState=DoorState;        // store latest door state   
     } 
@@ -102,7 +102,7 @@ bool cmdmode=false;
       switch (serbuffer[i]) {
         case 66:
           Mode="B";
-          pos=1100; doorlatch(pos); 
+          pos=1050; doorlatch(pos); 
           break;
         case 68:
           Debug=true;
@@ -116,12 +116,12 @@ bool cmdmode=false;
           break;
         case 79:
 	        Mode="O";
-          pos=2150; doorlatch(pos);
+          pos=2100; doorlatch(pos);
           break;
         }         // end switch
-      Serial.print("*M");
-	    Serial.write(Mode);
-      Serial.print("\n");
+      String ack="*M";
+      ack=ack+Mode+"\n";  
+      Serial.print(ack);
       cmdmode=false;
       }           // end cmdmode
     else { if(serbuffer[i]==35)			// "#" precedes a single-char mode command
