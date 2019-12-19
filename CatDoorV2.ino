@@ -106,7 +106,7 @@ bool cmdmode=false;
           break;
         case 68:
           Debug=true;
-          Serial.print("Debug mode ON\n"); 
+          Serial.print("Debug ON\n"); 
           break;  
         case 73:
           Mode="I";
@@ -126,7 +126,7 @@ bool cmdmode=false;
       }           // end cmdmode
     else { if(serbuffer[i]==35)			// "#" precedes a single-char mode command
              { 
-              if(Debug) {Serial.print("command mode on\n");}
+              // if(Debug) {Serial.print("command mode on\n");}
               cmdmode=true; 
              }
          } // end if #
