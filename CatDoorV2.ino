@@ -43,13 +43,17 @@ void loop()
    if (DoorState != lastDoorState) {
    // if the state has changed and change is to LOW door is closed
    if (DoorState == LOW) {
-        if(Debug) { Serial.print("DC\n"); } 
-	 if(Mode!="B")
-           { pos=2100; doorlatch(pos); }     //if door closed, ensure latch also closed
+        if(Debug) { Serial.print("*DC\n"); } 
+   //if door closed and mode not (B)oth ways, ensure latch also closed.
+   // 2020-03-13: suppressed for now     
+	 // if(Mode!="B")
+   //     { pos=2100; doorlatch(pos); }     
         }
      else { 
-        if(Debug) { Serial.print("DO\n"); } 
-        pos=1050; doorlatch(pos);             //if door open, ensure latch also open
+        if(Debug) { Serial.print("*DO\n"); } 
+        //if door open, ensure latch also open
+        // 2020-03-13: suppressed for now 
+        // pos=1050; doorlatch(pos);             
       	}
      lastDoorState=DoorState;        // store latest door state   
     } 
@@ -70,17 +74,17 @@ void loop()
           ID |= rxbuffer[i];
         }
       if(Debug) {  
-        Serial.print("ID");
+        Serial.print("*ID");
         Serial.print(ID,DEC);
         Serial.print("\n");
         }
-      // if(ID==tag1 || ID==tag2)  // if authoried tag detected, 
+      // if(ID==tag1 || ID==tag2)  // if authorised tag detected, 
       // {
       // pos=1100; doorlatch(pos); delay(15000); pos=2150; doorlatch(pos);
       // } 
       // else { Serial.print("\nunidentified tag"); }
       }
-    delay(500); 
+    delay(200); 
 }
 
 void checkControls() {
