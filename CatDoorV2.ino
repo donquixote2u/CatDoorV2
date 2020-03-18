@@ -105,8 +105,11 @@ bool cmdmode=false;
       // Serial.print(serbuffer[i],HEX);
       switch (serbuffer[i]) {
         case 66:
-          Mode="B";
+          Mode="B";    // BOTH WAYS
           pos=1050; doorlatch(pos); 
+          break;
+        case 67:
+          Mode="C";    // CLEAR (RESET) CDC
           break;
         case 68:
           Debug=true;
@@ -122,8 +125,14 @@ bool cmdmode=false;
 	        Mode="O";
           pos=2100; doorlatch(pos);
           break;
+        case 81:
+                        // Mode="Q"; query;  just return current Mode setting
+          break;
+        case 84:
+          Mode="T";    // Train; save next tag read as a valid one
+          break;
         }         // end switch
-      String ack="*M";
+      String ack="*";
       ack=ack+Mode+"\n";  
       Serial.print(ack);
       cmdmode=false;
